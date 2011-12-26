@@ -1,0 +1,333 @@
+use strictures;
+
+package WWW::CPAN::Feeds;
+
+use Web::Simple;
+
+use utf8;
+use Web::SimpleX::Helper::ActionWithRender 'action';
+use Web::SimpleX::View::XslateData map "$_\_xslate_data", qw( render action_error view_error process );
+use File::Slurp qw' write_file read_file ';
+use JSON qw' from_json to_json ';
+use Encode qw'decode_utf8 encode_utf8';
+use Crypt::Eksblowfish::Bcrypt qw'en_base64 bcrypt';
+use String::Random;
+use File::Path 'make_path';
+use File::Basename 'dirname';
+use Plack::Response;
+use Plack::Middleware::Session;
+use XML::Feed;
+use DateTime::Format::ISO8601;
+
+sub {
+    with "WWW::CPAN::Feeds::Role::$_" for qw( Config Releases );
+    has env => ( is => 'rw' );
+  }
+  ->();
+
+sub default_view { 'xslate_data' }
+
+sub dispatch_request {
+    my ( $self, $env ) = @_;
+
+    $self->env( $env );
+
+    disp(
+        ''    => sub { Plack::Middleware::Session->new( store => 'Plack::Session::Store::File' ) },
+        'GET' => disp(
+            '/'              => action( 'root_page' ),
+            '/feeds'         => action( 'list_feeds' ),
+            '/feeds/xml/**'  => action( 'xml_feed' ),
+            '/feeds/show/**' => action( 'show_feed' ),
+            '/feeds/edit'    => action( 'edit_feed' ),
+            '/feeds/edit/**' => action( 'edit_feed' ),
+        ),
+        'POST' => disp(
+            '/feeds/save + %name~&password~&regexes~' => action( 'create_or_edit_feed' ),    #
+        ),
+    );
+}
+
+sub disp {
+    my ( @args ) = @_;
+    return sub { @args };
+}
+
+sub root_page {
+    my ( $self ) = @_;
+    return ['root'];
+}
+
+sub xml_feed {
+    my ( $self, $name ) = @_;
+
+    my ( $feed, $releases ) = $self->apply_feed( $name );
+
+    my $atom = XML::Feed->new( 'Atom' );
+    $atom->title( "CPAN::Feeds - $feed->{name}" );
+    $atom->id( "/feeds/show/$feed->{name}" );
+    $atom->link( "/feeds/show/$feed->{name}" );
+    $atom->self_link( "/feeds/xml/$feed->{name}" );
+    $atom->modified( DateTime->now );
+
+    for my $rel ( @{$releases} ) {
+        my $entry = XML::Feed::Entry->new;
+        $entry->id( "https://metacpan.org/release/$rel->{author}/$rel->{name}/" );
+        $entry->link( "/feeds/show/$feed->{name}" );
+        $entry->title( $rel->{name} );
+        $entry->summary( $rel->{name} );
+        $entry->content( $rel->{name} );
+        $entry->issued( DateTime::Format::ISO8601->parse_datetime( "$rel->{date}Z" ) );
+        $entry->modified( DateTime::Format::ISO8601->parse_datetime( "$rel->{date}Z" ) );
+        $entry->author( $rel->{author} );
+        $atom->add_entry( $entry );
+    }
+
+    return Plack::Response->new(
+        200,    #
+        [ "Content-Type" => "application/atom+xml; charset=utf-8" ],
+        [ $atom->as_xml ]
+    );
+}
+
+sub show_feed {
+    my ( $self, $name ) = @_;
+
+    my ( $feed, $releases ) = $self->apply_feed( $name );
+
+    my %args = ( feed => $feed, releases => $releases );
+    my $new_passes = $self->session->{new_passes} ||= {};
+    $args{new_pass} = delete $new_passes->{$name} if $new_passes->{$name};
+
+    return [ 'show', \%args ];
+}
+
+sub apply_feed {
+    my ( $self, $name ) = @_;
+
+    my $feed = $self->load_feed( $name );
+
+    my @releases = values %{ $self->releases->{data} };
+
+    my @regexes = split '\n', $feed->{regexes};
+    for my $re ( @regexes ) {
+        @releases = grep { $_->{name} =~ /$re/ } @releases;
+    }
+
+    @releases = reverse sort { $a->{date} cmp $b->{date} } @releases;
+
+    return ( $feed, \@releases );
+}
+
+sub edit_feed {
+    my ( $self ) = @_;
+    return ['edit'];
+}
+
+sub create_or_edit_feed {
+    my ( $self, $name, $password, $regexes ) = @_;
+
+    die "No patterns specified." if !$regexes;
+
+    $name ||= $self->available_random_name;
+
+    die "Name must be more than 3 characters." if length $name < 3;
+
+    my $valid_chars = $self->valid_name_chars;
+    my ( @invalid_chars ) = ( $name =~ /([^$valid_chars])/g );
+    die "Name can only contain these characters: $valid_chars Please remove these chars: @invalid_chars"
+      if @invalid_chars;
+
+    my $feed = $self->load_feed( $name );
+
+    $password ||= $self->random;
+
+    $feed ||= {
+        name     => $name,
+        password => $self->hash_password( $name, $password ),
+    };
+
+    die "Password not correct." if $feed->{password} ne bcrypt( $password, $feed->{password} );
+
+    $feed->{regexes} = $regexes;
+
+    $self->save_feed( $feed );
+
+    return $self->redirect( "/feeds/show/$name" );
+}
+
+sub redirect {
+    my ( $self, $url ) = @_;
+    my $res = Plack::Response->new;
+    $res->redirect( $url );
+    return $res;
+}
+
+sub random {
+    my ( $self ) = @_;
+    my $valid_chars = $self->valid_name_chars;
+    $valid_chars =~ s@/@@;
+    return String::Random->new->randregex( "[$valid_chars]" x 10 );
+}
+
+sub available_random_name {
+    my ( $self ) = @_;
+
+    my $name = "r/" . $self->random;
+    while ( -e $self->feed_file( $name ) ) {
+        $name = "r/" . $self->random;
+    }
+
+    return $name;
+}
+
+sub hash_password {
+    my ( $self, $name, $password ) = @_;
+
+    my $salt = $name;
+    $salt = substr $salt, 0, 16;
+    $salt .= ' ' x ( 16 - length $salt );
+    $salt = en_base64( $salt );
+    my $settings = "\$2a\$08\$$salt";
+
+    my $hash = bcrypt( $password, $settings );
+
+    $self->session->{new_passes}{$name} = $password;
+
+    return $hash;
+}
+
+sub session { $_[0]->env->{"psgix.session"} }
+
+sub load_feed {
+    my ( $self, $name ) = @_;
+
+    my $file = $self->feed_file( $name );
+
+    my $feed = eval { read_file $file, binmode => 'utf8' };
+    return if !$feed;
+
+    $feed = from_json $feed;
+    return $feed;
+}
+
+sub save_feed {
+    my ( $self, $feed ) = @_;
+
+    my $file = $self->feed_file( $feed->{name} );
+
+    make_path dirname $file;
+    write_file $file, { binmode => 'utf8' }, to_json $feed;
+
+    return;
+}
+
+sub valid_name_chars { "a-zA-Z0-9/_" }
+
+sub feed_file {
+    my ( $self, $name ) = @_;
+
+    ( my $stripped_name = $name ) =~ s@/@@g;
+    my @parts = map substr( $stripped_name, 0, $_ ), 1, 2;
+    my $file = $self->config->{dir} . join '/', 'feeds', @parts, $name;
+    return $file;
+}
+
+1;
+
+__DATA__
+
+@@ root
+
+
+@@ show
+            <h1>Feed [ <: $feed.name :> ]</h1>
+
+            <a href="/feeds/edit/<: $feed.name :>">Edit</a>
+            -
+            <a href="/feeds/xml/<: $feed.name :>">Atom</a>
+
+            <hr />
+
+            <: if $new_pass { :>
+                This is your new password: <pre><: $new_pass :></pre>
+
+                <hr />
+            <: } :>
+
+            <pre style="background-color: #EEE; padding: 1em;"><: $feed.regexes :></pre>
+
+            <: for $releases -> $rel { :>
+            <: $rel.date :> - <: $rel.name :><br />
+            <: } :>
+
+@@ edit
+            <form method="POST" action="/feeds/save">
+                Name<input type="text" name="name" />
+                Password<input type="password" name="password" />
+                <br />
+                <textarea name="regexes" /></textarea>
+                <br />
+                <input type="submit" value="Save" />
+            </form>
+
+
+@@ save
+            <: $name :>
+            <br />
+            <: $file :>
+            <br />
+            <: $password :>
+            <br />
+            <: $regexes :>
+            <br />
+            <: $file :>
+
+@@ action_error
+            An error occured: <: $error :>
+
+
+@@ header
+<html>
+    <html>
+        <title>CPAN::Feeds</title>
+	<link rel="icon" type="image/gif" href="/cpanfeeds.png">
+	<link rel="SHORTCUT ICON" type="image/gif" href="/cpanfeeds.png">
+        <link type="text/css" href="/cpanfeeds.css" rel="stylesheet" media="screen" />
+    </html>
+    <body>
+        <div id="mainnavi" >
+            <img src="/cpanfeeds.png" />
+            <ul id="action_navi">
+                <li id="home_link"><a href="/">CPAN::Feeds</a></li>
+                <li><a href="/feeds/edit">New</a></li>
+                <li><a href="/feeds">Feeds</a></li>
+            </ul>
+            <ul id="info_navi">
+                <li><a href="/help">Help</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+            <div style="clear:both"></div>
+        </div>
+        <div id="container">
+            <div id="content">
+
+
+@@ footer
+            </div>
+            <div id="left">
+                <a href="/about">Source</a><br />
+                <a href="/about">Bugs</a><br />
+                <br />
+                Powered by:<br />
+                <a href="http://www.perl.org">Perl</a><br />
+                <a href="https://metacpan.org/module/Web::Simple">Web::Simple</a><br />
+                <a href="https://metacpan.org/module/Text::Xslate">Text::Xslate</a><br />
+                <a href="https://metacpan.org/module/MetaCPAN::API">MetaCPAN::API</a><br />
+                <br />
+                Created by:<br />
+                <a href="https://metacpan.org/author/MITHALDU">Christian Walde</a><br />
+            </div>
+        </div>
+    </body>
+</html>

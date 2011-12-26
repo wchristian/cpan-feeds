@@ -1,0 +1,120 @@
+
+@font-face {
+	font-family: 'DesignationRegular';
+	src: url('/fonts/designation-webfont.eot');
+	src: local('☺'),
+		url('/fonts/designation-webfont.woff') format('woff'),
+		url('/fonts/designation-webfont.ttf') format('truetype'),
+		url('/fonts/designation-webfont.svg#webfontC77soR4u') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'DesignationBold';
+	src: url('/fonts/designation-bold-webfont.eot');
+	src: local('☺'),
+		url('/fonts/designation-bold-webfont.woff') format('woff'),
+		url('/fonts/designation-bold-webfont.ttf') format('truetype'),
+		url('/fonts/designation-bold-webfont.svg#webfont3JizpMtW') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+body {
+    font-family: Verdana, Arial, SunSans-Regular, Sans-Serif;
+    padding:0;
+    margin:0;
+    background-color: #DAE4E4;
+}
+
+a {color: #3B38FA;}
+a:visited {color:#0000BB;}
+a:hover {color: #0000BB;}
+a:active { color:#0000BB;}
+
+#container {
+    margin: 0;
+    padding: 0;
+}
+
+#mainnavi {
+    margin: 0;
+    padding: 0;
+	padding: 0 4%;
+	padding-top:0;
+	padding-bottom:0;
+    background-color:#FADC38;
+	border-bottom:0.0625em solid #999999;
+    border-collapse: collapse;
+}
+
+#mainnavi a {
+    text-decoration: none;
+}
+#mainnavi img {
+    height: 2em;
+    float:left;
+    vertical-align:bottom;
+    margin: 0.2em 0.75em 0.2em 0;
+}
+#mainnavi ul {
+    margin: 0;
+    padding: 0;
+    list-style-type:none;
+}
+
+#mainnavi li {
+    text-align: center;
+    float:left;
+    width: 7em;
+	border-right:0.0625em solid #999999;
+    padding: 0.38em 0;
+}
+#mainnavi li a {
+    font-family: DesignationRegular, Verdana, Arial, SunSans-Regular, Sans-Serif;
+    font-size: 1.1em;
+}
+
+#mainnavi #home_link {
+    font-weight: bold;
+    text-align: left;
+    padding: 0.0em 0;
+    width: 13em;
+}
+#mainnavi #home_link a{
+    font-family: DesignationBold, Verdana, Arial, SunSans-Regular, Sans-Serif;
+    color: #3B38FA;
+    font-size: 1.6em;
+}
+
+#mainnavi a:visited {
+    color: #3B38FA;
+}
+
+#action_navi {
+    float: left;
+}
+
+#info_navi {
+	border-left:0.0625em solid #999999;
+    float: right;
+}
+
+#content {
+    width: 68%;
+    float: left;
+    min-height:400px;
+    padding: 1em;
+    margin: 1%;
+    border: 0.125em solid #999999;
+    border-radius: 0.25em;
+    background-color: white;
+}
+
+#left {
+    width: 25%;
+    float: right;
+    margin: 0;
+    padding: 0.9em 0 0 0;
+}
