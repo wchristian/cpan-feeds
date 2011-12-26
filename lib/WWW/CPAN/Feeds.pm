@@ -296,19 +296,19 @@ __DATA__
         <link type="text/css" href="/cpanfeeds.css" rel="stylesheet" media="screen" />
     </html>
     <body>
-        <div id="mainnavi" >
-            <img src="/cpanfeeds.png" />
-            <ul id="action_navi">
-                <li id="home_link"><a href="/">CPAN::Feeds</a></li>
-                <li><a href="/feeds/edit">New</a></li>
-                <li><a href="/feeds">Feeds</a></li>
-            </ul>
-            <ul id="info_navi">
-                <li><a href="/help">Help</a></li>
-                <li><a href="/about">About</a></li>
-            </ul>
-            <div style="clear:both"></div>
-        </div>
+        <table id="head">
+            <tr>
+                <td id="spacer_left"></td>
+                <td id="icon"><img src="/cpanfeeds.png" /></td>
+                <td id="homelink" ><a href="/">CPAN::Feeds</a></td>
+                <td><a href="/feeds/edit">New</a></td>
+                <td><a href="/feeds">Feeds</a></td>
+                <td id="spacer_center"></td>
+                <td><a href="/help">Help</a></td>
+                <td><a href="/about">About</a></td>
+                <td id="spacer_right"></td>
+            </tr>
+        </table>
         <div id="container">
             <div id="content">
 
