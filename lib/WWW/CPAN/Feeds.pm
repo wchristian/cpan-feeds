@@ -7,20 +7,15 @@ use Web::Simple;
 use utf8;
 use Web::SimpleX::Helper::ActionWithRender 'action';
 use Web::SimpleX::View::XslateData map "$_\_xslate_data", qw( render action_error view_error process );
-use File::Slurp qw' write_file read_file ';
-use JSON qw' from_json to_json ';
-use Encode qw'decode_utf8 encode_utf8';
 use Crypt::Eksblowfish::Bcrypt qw'en_base64 bcrypt';
 use String::Random;
-use File::Path 'make_path';
-use File::Basename 'dirname';
 use Plack::Response;
 use Plack::Middleware::Session;
 use XML::Feed;
 use DateTime::Format::ISO8601;
 
 sub {
-    with "WWW::CPAN::Feeds::Role::$_" for qw( Config Releases );
+    with "WWW::CPAN::Feeds::Role::$_" for qw( Config Releases Feeds );
     has env => ( is => 'rw' );
   }
   ->();
@@ -199,39 +194,7 @@ sub hash_password {
 
 sub session { $_[0]->env->{"psgix.session"} }
 
-sub load_feed {
-    my ( $self, $name ) = @_;
-
-    my $file = $self->feed_file( $name );
-
-    my $feed = eval { read_file $file, binmode => 'utf8' };
-    return if !$feed;
-
-    $feed = from_json $feed;
-    return $feed;
-}
-
-sub save_feed {
-    my ( $self, $feed ) = @_;
-
-    my $file = $self->feed_file( $feed->{name} );
-
-    make_path dirname $file;
-    write_file $file, { binmode => 'utf8' }, to_json $feed;
-
-    return;
-}
-
 sub valid_name_chars { "a-zA-Z0-9/_" }
-
-sub feed_file {
-    my ( $self, $name ) = @_;
-
-    ( my $stripped_name = $name ) =~ s@/@@g;
-    my @parts = map substr( $stripped_name, 0, $_ ), 1, 2;
-    my $file = $self->config->{dir} . join '/', 'feeds', @parts, $name;
-    return $file;
-}
 
 1;
 

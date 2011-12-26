@@ -1,0 +1,44 @@
+use strictures;
+
+package WWW::CPAN::Feeds::Role::Feeds;
+
+use Moo::Role;
+
+use File::Slurp qw' write_file read_file ';
+use JSON qw' from_json to_json ';
+use File::Path 'make_path';
+use File::Basename 'dirname';
+
+sub load_feed {
+    my ( $self, $name ) = @_;
+
+    my $file = $self->feed_file( $name );
+
+    my $feed = eval { read_file $file, binmode => 'utf8' };
+    return if !$feed;
+
+    $feed = from_json $feed;
+    return $feed;
+}
+
+sub save_feed {
+    my ( $self, $feed ) = @_;
+
+    my $file = $self->feed_file( $feed->{name} );
+
+    make_path dirname $file;
+    write_file $file, { binmode => 'utf8' }, to_json $feed;
+
+    return;
+}
+
+sub feed_file {
+    my ( $self, $name ) = @_;
+
+    ( my $stripped_name = $name ) =~ s@/@@g;
+    my @parts = map substr( $stripped_name, 0, $_ ), 1, 2;
+    my $file = $self->config->{dir} . join '/', 'feeds', @parts, $name;
+    return $file;
+}
+
+1;
