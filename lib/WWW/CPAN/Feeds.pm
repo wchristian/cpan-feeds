@@ -118,7 +118,7 @@ sub apply_feed {
     my @regexes = split '\n', $feed->{regexes};
     my %matched_releases;
     for my $re ( @regexes ) {
-        my @matches = grep { $_->{distribution} =~ /$re/ } @releases;
+        my @matches = grep { $_->{distribution} =~ /^$re$/ } @releases;
         $matched_releases{ $_->{name} } = $_ for @matches;
     }
 
