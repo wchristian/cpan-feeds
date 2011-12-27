@@ -56,6 +56,21 @@ a:active { color:#0C0CB8;}
     padding: 0.9em 0 0 0;
 }
 
+table#edit {
+    width: 100%;
+}
+
+table#edit th {
+    text-align: left;
+    vertical-align: top;
+    width: 6em;
+    line-height: 1.5em;
+}
+
+textarea#regexes {
+    width: 100%;
+    height: 20em;
+}
 
 /* header */
 
