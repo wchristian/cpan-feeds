@@ -14,6 +14,13 @@ sub load_feed {
     my ( $self, $name ) = @_;
 
     my $file = $self->feed_file( $name );
+    my $feed = $self->load_feed_file( $file );
+
+    return $feed;
+}
+
+sub load_feed_file {
+    my ( $self, $file ) = @_;
 
     my $feed = eval { read_file $file, binmode => 'utf8' };
     return if !$feed;
