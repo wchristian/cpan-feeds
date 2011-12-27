@@ -8,8 +8,21 @@ use File::Slurp qw' write_file read_file ';
 use JSON qw' from_json to_json ';
 use File::Path 'make_path';
 use File::Basename 'dirname';
+use Path::Class::Rule;
 use DateTime;
+
+sub feed_rule { Path::Class::Rule->new->file }
 sub feed_dir { $_[0]->config->{dir}.'/feeds' }
+
+sub all_feeds {
+    my ( $self ) = @_;
+
+    my @feeds = $self->feed_rule->all( $self->feed_dir );
+    @feeds = map $self->load_feed_file( $_ ), @feeds;
+    @feeds = reverse sort { ( $a->{updated} || '' ) cmp( $b->{updated} || '' ) } @feeds;
+
+    return @feeds;
+}
 
 sub load_feed {
     my ( $self, $name ) = @_;

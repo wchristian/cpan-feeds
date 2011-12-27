@@ -53,6 +53,14 @@ sub root_page {
     return ['root'];
 }
 
+sub list_feeds {
+    my ( $self ) = @_;
+
+    my @feeds = $self->all_feeds;
+
+    return [ 'root', { feeds => \@feeds } ];
+}
+
 sub xml_feed {
     my ( $self, $name ) = @_;
 
@@ -202,6 +210,14 @@ sub valid_name_chars { "a-zA-Z0-9/_" }
 __DATA__
 
 @@ root
+            <table>
+                <: for $feeds -> $feed { :>
+                    <tr>
+                        <td><: $feed.updated :></td>
+                        <td><a href="/feeds/show/<: $feed.name :>"><: $feed.name :></a></td>
+                    </tr>
+                <: } :>
+            </table>
 
 
 @@ show
