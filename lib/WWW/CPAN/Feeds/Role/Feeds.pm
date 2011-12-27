@@ -8,6 +8,7 @@ use File::Slurp qw' write_file read_file ';
 use JSON qw' from_json to_json ';
 use File::Path 'make_path';
 use File::Basename 'dirname';
+use DateTime;
 sub feed_dir { $_[0]->config->{dir}.'/feeds' }
 
 sub load_feed {
@@ -31,6 +32,8 @@ sub load_feed_file {
 
 sub save_feed {
     my ( $self, $feed ) = @_;
+
+    $feed->{updated} = DateTime->now->_stringify;
 
     my $file = $self->feed_file( $feed->{name} );
 

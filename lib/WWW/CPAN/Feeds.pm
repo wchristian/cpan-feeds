@@ -140,6 +140,7 @@ sub create_or_edit_feed {
     $feed ||= {
         name     => $name,
         password => $self->hash_password( $name, $password ),
+        created  => DateTime->now->_stringify,
     };
 
     die "Password not correct." if $feed->{password} ne bcrypt( $password, $feed->{password} );
