@@ -60,6 +60,7 @@ sub save_feed {
     my ( $self, $feed ) = @_;
 
     $feed->{updated} = DateTime->now->_stringify;
+    $feed->{regexes} =~ s/\r//g;
 
     my $file = $self->feed_file( $feed->{name} );
 
