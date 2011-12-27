@@ -50,7 +50,10 @@ sub disp {
 
 sub root_page {
     my ( $self ) = @_;
-    return ['root'];
+
+    my @feeds = $self->recent_feeds;
+
+    return [ 'root', { feeds => \@feeds } ];
 }
 
 sub list_feeds {

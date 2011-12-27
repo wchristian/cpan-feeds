@@ -24,6 +24,19 @@ sub all_feeds {
     return @feeds;
 }
 
+sub recent_feeds {
+    my ( $self ) = @_;
+
+    my @feeds = $self->all_feeds;
+
+    my %seen_regexes;
+    @feeds = grep { !$seen_regexes{ $_->{regexes} }++ } @feeds;
+
+    @feeds = @feeds[0..9] if @feeds > 10;
+
+    return @feeds;
+}
+
 sub load_feed {
     my ( $self, $name ) = @_;
 
