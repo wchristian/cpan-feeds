@@ -274,8 +274,8 @@ __DATA__
 <html>
     <html>
         <title>CPAN::Feeds</title>
-	<link rel="icon" type="image/gif" href="/cpanfeeds.png">
-	<link rel="SHORTCUT ICON" type="image/gif" href="/cpanfeeds.png">
+        <link rel="icon" type="image/gif" href="/cpanfeeds.png">
+        <link rel="SHORTCUT ICON" type="image/gif" href="/cpanfeeds.png">
         <link type="text/css" href="/cpanfeeds.css" rel="stylesheet" media="screen" />
     </html>
     <body>
