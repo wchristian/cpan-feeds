@@ -53,7 +53,7 @@ sub root_page {
 
     my @feeds = $self->recent_feeds;
 
-    return [ 'root', { feeds => \@feeds } ];
+    return [ 'root.tx', { feeds => \@feeds } ];
 }
 
 sub list_feeds {
@@ -61,7 +61,7 @@ sub list_feeds {
 
     my @feeds = $self->all_feeds;
 
-    return [ 'root', { feeds => \@feeds } ];
+    return [ 'root.tx', { feeds => \@feeds } ];
 }
 
 sub xml_feed {
@@ -105,7 +105,7 @@ sub show_feed {
     my $new_passes = $self->session->{new_passes} ||= {};
     $args{new_pass} = delete $new_passes->{$name} if $new_passes->{$name};
 
-    return [ 'show', \%args ];
+    return [ 'show.tx', \%args ];
 }
 
 sub apply_feed {
@@ -131,7 +131,7 @@ sub apply_feed {
 sub edit_feed {
     my ( $self, $name ) = @_;
     my $feed = $self->load_feed( $name );
-    return [ 'edit', { feed => $feed } ];
+    return [ 'edit.tx', { feed => $feed } ];
 }
 
 sub create_or_edit_feed {
@@ -216,7 +216,7 @@ sub valid_name_chars { "a-zA-Z0-9/_" }
 
 __DATA__
 
-@@ root
+@@ root.tx
             <table>
                 <: for $feeds -> $feed { :>
                     <tr>
@@ -227,7 +227,7 @@ __DATA__
             </table>
 
 
-@@ show
+@@ show.tx
             <h1>Feed [ <: $feed.name :> ]</h1>
 
             <a href="/feeds/edit/<: $feed.name :>">Edit</a>
@@ -248,7 +248,7 @@ __DATA__
             <: $rel.date :> - <: $rel.name :><br />
             <: } :>
 
-@@ edit
+@@ edit.tx
             <form method="POST" action="/feeds/save">
                 <table id="edit">
                     <tr>
@@ -268,22 +268,11 @@ __DATA__
             </form>
 
 
-@@ save
-            <: $name :>
-            <br />
-            <: $file :>
-            <br />
-            <: $password :>
-            <br />
-            <: $regexes :>
-            <br />
-            <: $file :>
-
-@@ action_error
+@@ action_error.tx
             An error occured: <: $error :>
 
 
-@@ header
+@@ header.tx
 <html>
     <html>
         <title>CPAN::Feeds</title>
@@ -309,7 +298,7 @@ __DATA__
             <div id="content">
 
 
-@@ footer
+@@ footer.tx
             </div>
             <div id="left">
                 <a href="/about">Source</a><br />

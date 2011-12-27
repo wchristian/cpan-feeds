@@ -19,17 +19,15 @@ sub render_xslate_data {
 sub process_xslate_data {
     my ( $self, $template, $params, $statuscode ) = @_;
 
-    my $reader = Data::Section::Simple->new( ref $self );
-    $template = $reader->get_data_section( $template );
+    my $vpath = Data::Section::Simple->new( ref $self )->get_data_section();
 
-    if(!$params->{xslate_plain}) {
-        my $header = $reader->get_data_section( "header" );
-        my $footer = $reader->get_data_section( "footer" );
-        $template = "$header$template" if $header;
-        $template = "$template$footer" if $footer;
+    for my $name ( keys %{$vpath} ) {
+        next if $name !~ /\.tx$/;
+        next if $name =~ /^(header|footer)\.tx$/;
+        $vpath->{$name} = ":include header\n$vpath->{$name}\n:include footer";
     }
 
-    my $content = Text::Xslate->new->render_string( $template, $params );
+    my $content = Text::Xslate->new( path => [$vpath] )->render( $template, $params );
     $content = encode_utf8 $content;
 
     $statuscode ||= 200;
@@ -38,7 +36,7 @@ sub process_xslate_data {
 }
 
 sub action_error_xslate_data {
-    [ "action_error", { error => $_[1] }, 500 ];
+    [ "action_error.tx", { error => $_[1] }, 500 ];
 }
 
 sub view_error_xslate_data {
