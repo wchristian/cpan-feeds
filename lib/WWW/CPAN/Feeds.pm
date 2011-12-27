@@ -126,8 +126,9 @@ sub apply_feed {
 }
 
 sub edit_feed {
-    my ( $self ) = @_;
-    return ['edit'];
+    my ( $self, $name ) = @_;
+    my $feed = $self->load_feed( $name );
+    return [ 'edit', { feed => $feed } ];
 }
 
 sub create_or_edit_feed {
@@ -246,11 +247,20 @@ __DATA__
 
 @@ edit
             <form method="POST" action="/feeds/save">
-                Name<input type="text" name="name" />
-                Password<input type="password" name="password" />
-                <br />
-                <textarea name="regexes" /></textarea>
-                <br />
+                <table id="edit">
+                    <tr>
+                        <th>Name</th>
+                        <td><input type="text" name="name" value="<: $feed.name :>" /></td>
+                    </tr>
+                    <tr>
+                        <th>Password</th>
+                        <td><input type="password" name="password" /></td>
+                    </tr>
+                    <tr>
+                        <th>Regexes</th>
+                        <td><textarea id="regexes" name="regexes" /><: $feed.regexes :></textarea></td>
+                    </tr>
+                </table>
                 <input type="submit" value="Save" />
             </form>
 
