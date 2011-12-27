@@ -116,13 +116,16 @@ sub apply_feed {
     my @releases = values %{ $self->releases->{data} };
 
     my @regexes = split '\n', $feed->{regexes};
+    my %matched_releases;
     for my $re ( @regexes ) {
-        @releases = grep { $_->{name} =~ /$re/ } @releases;
+        my @matches = grep { $_->{name} =~ /$re/ } @releases;
+        $matched_releases{ $_->{name} } = $_ for @matches;
     }
 
-    @releases = reverse sort { $a->{date} cmp $b->{date} } @releases;
+    my @matches = values %matched_releases;
+    @matches = reverse sort { $a->{date} cmp $b->{date} } @matches;
 
-    return ( $feed, \@releases );
+    return ( $feed, \@matches );
 }
 
 sub edit_feed {
