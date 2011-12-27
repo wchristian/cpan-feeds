@@ -8,6 +8,7 @@ use File::Slurp qw' write_file read_file ';
 use JSON qw' from_json to_json ';
 use File::Path 'make_path';
 use File::Basename 'dirname';
+sub feed_dir { $_[0]->config->{dir}.'/feeds' }
 
 sub load_feed {
     my ( $self, $name ) = @_;
@@ -37,7 +38,7 @@ sub feed_file {
 
     ( my $stripped_name = $name ) =~ s@/@@g;
     my @parts = map substr( $stripped_name, 0, $_ ), 1, 2;
-    my $file = $self->config->{dir} . join '/', 'feeds', @parts, $name;
+    my $file = join '/', $self->feed_dir, @parts, $name;
     return $file;
 }
 
