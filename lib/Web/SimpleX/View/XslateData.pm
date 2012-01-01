@@ -36,6 +36,7 @@ sub process_xslate_data {
 }
 
 sub action_error_xslate_data {
+    warn $_[1];
     [ "action_error.tx", { error => $_[1] }, 500 ];
 }
 
