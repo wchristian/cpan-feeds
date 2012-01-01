@@ -13,6 +13,7 @@ use Plack::Response;
 use Plack::Middleware::Session;
 use XML::Feed;
 use DateTime::Format::ISO8601;
+use Data::SPath 'spath';
 
 sub {
     with "WWW::CPAN::Feeds::Role::$_" for qw( Config Releases Feeds );
@@ -116,16 +117,29 @@ sub apply_feed {
     my @releases = values %{ $self->releases->{data} };
 
     my @regexes = split '\n', $feed->{regexes};
-    my %matched_releases;
-    for my $re ( @regexes ) {
-        my @matches = grep { $_->{distribution} =~ /^$re$/ } @releases;
-        $matched_releases{ $_->{name} } = $_ for @matches;
-    }
+    my %matched_releases = map $self->apply_regex( $_, \@releases ), @regexes;
 
     my @matches = values %matched_releases;
     @matches = reverse sort { $a->{date} cmp $b->{date} } @matches;
 
     return ( $feed, \@matches );
+}
+
+sub apply_regex {
+    my ( $self, $re, $releases ) = @_;
+
+    my ( $path, $pathed_re ) = ( $re =~ /^"([\/a-z0-9_]*?)"\s+(.*?)$/ );
+    ( $path, $pathed_re ) = ( "/distribution", $re ) if !$path;
+
+    my %matches;
+    for my $rel ( @{$releases} ) {
+        my $match = eval { spath $rel, $path };
+        next if $match !~ /^$pathed_re$/;
+
+        $matches{ $rel->{name} } = $rel;
+    }
+
+    return %matches;
 }
 
 sub edit_feed {
