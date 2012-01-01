@@ -2,6 +2,8 @@ use strictures;
 
 package WWW::CPAN::Feeds;
 
+# ABSTRACT: renders filtered CPAN upload feeds
+
 use Web::Simple;
 
 use utf8;
