@@ -65,7 +65,7 @@ sub error_check {
 
     my @errors = read_file "cpanfeeds_error_log";
     @errors =
-      grep { !/^Binding to/ and !/^Setting gid/ and !/Starman::Server .* starting/ and !/Server .* closing/ } @errors;
+      grep { !/^Binding to/ and !/^Setting gid/ and !/Starman::Server .* starting/ and !/Server closing/ } @errors;
 
     my $code = 200;
     $code = 500 if @errors;
