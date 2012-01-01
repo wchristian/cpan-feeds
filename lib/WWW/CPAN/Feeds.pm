@@ -17,6 +17,7 @@ use XML::Feed;
 use DateTime::Format::ISO8601;
 use Data::SPath 'spath';
 use Plack::Middleware::Static;
+use File::Slurp 'read_file';
 
 sub {
     with "WWW::CPAN::Feeds::Role::$_" for qw( Config Releases Feeds );
@@ -46,6 +47,7 @@ sub dispatch_request {
             '/feeds/show/**' => action( 'show_feed' ),
             '/feeds/edit'    => action( 'edit_feed' ),
             '/feeds/edit/**' => action( 'edit_feed' ),
+            '/health/errors' => action( 'error_check' ),
         ),
         'POST' => disp(
             '/feeds/save + %name~&password~&regexes~' => action( 'create_or_edit_feed' ),    #
@@ -56,6 +58,18 @@ sub dispatch_request {
 sub disp {
     my ( @args ) = @_;
     return sub { @args };
+}
+
+sub error_check {
+    my ( $self ) = @_;
+
+    my @errors = read_file "cpanfeeds_error_log";
+    @errors = grep { !/^Binding to/ and !/^Setting gid/ and !/Starman::Server .* starting/ and !/Server .* closing/ } @errors;
+
+    my $code = 200;
+    $code = 500 if @errors;
+
+    return [ 'error_status.tx', { errors => \@errors } ] ;
 }
 
 sub root_page {
@@ -238,6 +252,17 @@ sub valid_name_chars { "a-zA-Z0-9/_" }
 1;
 
 __DATA__
+
+@@ error_status.tx
+
+            <: if !$errors { :>
+                No errors have occured lately.
+            <: } :>
+
+            <: for $errors -> $error { :>
+                $error<br />
+            <: } :>
+
 
 @@ root.tx
             <table>
