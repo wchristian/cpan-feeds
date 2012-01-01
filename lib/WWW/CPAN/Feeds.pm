@@ -64,12 +64,13 @@ sub error_check {
     my ( $self ) = @_;
 
     my @errors = read_file "cpanfeeds_error_log";
-    @errors = grep { !/^Binding to/ and !/^Setting gid/ and !/Starman::Server .* starting/ and !/Server .* closing/ } @errors;
+    @errors =
+      grep { !/^Binding to/ and !/^Setting gid/ and !/Starman::Server .* starting/ and !/Server .* closing/ } @errors;
 
     my $code = 200;
     $code = 500 if @errors;
 
-    return [ 'error_status.tx', { errors => \@errors } ] ;
+    return [ 'error_status.tx', { errors => \@errors }, $code ];
 }
 
 sub root_page {
@@ -260,7 +261,7 @@ __DATA__
             <: } :>
 
             <: for $errors -> $error { :>
-                $error<br />
+                <: $error :><br />
             <: } :>
 
 
