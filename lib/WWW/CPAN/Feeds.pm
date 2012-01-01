@@ -16,6 +16,7 @@ use Plack::Middleware::Session;
 use XML::Feed;
 use DateTime::Format::ISO8601;
 use Data::SPath 'spath';
+use Plack::Middleware::Static;
 
 sub {
     with "WWW::CPAN::Feeds::Role::$_" for qw( Config Releases Feeds );
@@ -31,6 +32,12 @@ sub dispatch_request {
     $self->env( $env );
 
     disp(
+        '' => sub {
+            Plack::Middleware::Static->new(
+                path => qr{^/(fonts/|).*\.(ico|css|png|eot|svg|ttf|woff)},
+                root => $ENV{CPANFEEDS_STATIC} || './cpan-feeds/corpus/'
+            );
+        },
         ''    => sub { Plack::Middleware::Session->new( store => 'Plack::Session::Store::File' ) },
         'GET' => disp(
             '/'              => action( 'root_page' ),
