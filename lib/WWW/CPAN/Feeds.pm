@@ -158,7 +158,7 @@ sub apply_regex {
     my %matches;
     for my $rel ( @{$releases} ) {
         my $match = eval { spath $rel, $path };
-        next if $match !~ /^$pathed_re$/;
+        next if $match !~ /^$pathed_re$/i;
 
         $matches{ $rel->{name} } = $rel;
     }
