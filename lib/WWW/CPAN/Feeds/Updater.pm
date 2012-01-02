@@ -5,6 +5,19 @@ package WWW::CPAN::Feeds::Updater;
 use Moo;
 
 BEGIN { require Mouse }
+
+{
+    use JSON ();
+    my $old_encode = \&JSON::to_json;
+    no warnings 'redefine';
+    *JSON::to_json = sub ($@) {
+        my ( @args ) = @_;
+        $args[1] ||= {};
+        $args[1]{canonical} ||= 1;
+        return $old_encode->( @args );
+    };
+}
+
 use MetaCPAN::API;
 
 use DateTime;
