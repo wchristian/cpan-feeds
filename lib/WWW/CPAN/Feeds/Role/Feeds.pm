@@ -12,12 +12,12 @@ use Path::Class::Rule;
 use DateTime;
 
 sub feed_rule { Path::Class::Rule->new->file }
-sub feed_dir { $_[0]->config->{dir}.'/feeds' }
+sub feed_dir  { $_[0]->config->{dir} . '/feeds' }
 
 sub all_feeds {
     my ( $self ) = @_;
 
-    my @feeds = $self->feed_rule->all( $self->feed_dir );
+    my @feeds = eval { $self->feed_rule->all( $self->feed_dir ) } || [];
     @feeds = map $self->load_feed_file( $_ ), @feeds;
     @feeds = reverse sort { ( $a->{updated} || '' ) cmp( $b->{updated} || '' ) } @feeds;
 
@@ -32,7 +32,7 @@ sub recent_feeds {
     my %seen_regexes;
     @feeds = grep { !$seen_regexes{ $_->{regexes} }++ } @feeds;
 
-    @feeds = @feeds[0..9] if @feeds > 10;
+    @feeds = @feeds[ 0 .. 9 ] if @feeds > 10;
 
     return @feeds;
 }
