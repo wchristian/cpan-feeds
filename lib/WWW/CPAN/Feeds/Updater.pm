@@ -8,13 +8,9 @@ BEGIN { require Mouse }
 
 use MetaCPAN::API;
 {
-    my $old_encode = \&MetaCPAN::API::to_json;
     no warnings 'redefine';
-    *MetaCPAN::API::to_json = sub ($@) {
-        my ( @args ) = @_;
-        $args[1] ||= {};
-        $args[1]{canonical} ||= 1;
-        return $old_encode->( @args );
+    *MetaCPAN::API::encode_json = sub ($) {
+        JSON::to_json( $_[0], { utf8 => 1, canonical => 1 } );
     };
 }
 
