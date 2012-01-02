@@ -248,7 +248,7 @@ sub hash_password {
 
 sub session { $_[0]->env->{"psgix.session"} }
 
-sub valid_name_chars { "a-zA-Z0-9/_" }
+sub valid_name_chars { "a-zA-Z0-9/_-" }
 
 1;
 
