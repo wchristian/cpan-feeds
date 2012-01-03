@@ -17,7 +17,7 @@ sub feed_dir  { $_[0]->config->{dir} . '/feeds' }
 sub all_feeds {
     my ( $self ) = @_;
 
-    my @feeds = eval { $self->feed_rule->all( $self->feed_dir ) } || [];
+    my @feeds = eval { $self->feed_rule->all( $self->feed_dir ) };
     @feeds = map $self->load_feed_file( $_ ), @feeds;
     @feeds = reverse sort { ( $a->{updated} || '' ) cmp( $b->{updated} || '' ) } @feeds;
 
