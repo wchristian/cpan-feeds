@@ -215,7 +215,7 @@ sub redirect {
 sub random {
     my ( $self ) = @_;
     my $valid_chars = $self->valid_name_chars;
-    $valid_chars =~ s@/@@;
+    $valid_chars =~ s@[/-]@@g;
     return String::Random->new->randregex( "[$valid_chars]" x 10 );
 }
 
@@ -248,7 +248,7 @@ sub hash_password {
 
 sub session { $_[0]->env->{"psgix.session"} }
 
-sub valid_name_chars { 'a-zA-Z0-9/_\-' }
+sub valid_name_chars { 'a-zA-Z0-9/_-' }
 
 1;
 
