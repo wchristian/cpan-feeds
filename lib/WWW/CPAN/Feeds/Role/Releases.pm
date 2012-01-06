@@ -8,7 +8,8 @@ use JSON qw' from_json to_json ';
 use File::Slurp qw' read_file write_file ';
 use File::Path 'make_path';
 
-has $_ => ( is => 'ro', lazy => 1, builder => "_build_$_" ) for qw( now month_ago releases );
+has $_ => ( is => 'ro', lazy => 1, builder => "_build_$_" ) for qw( now month_ago );
+has $_ => ( is => 'rw', lazy => 1, builder => "_build_$_" ) for qw( releases );
 
 sub _build_now { DateTime->now }
 
@@ -29,6 +30,12 @@ sub save_releases {
     make_path $self->config->{dir};
     write_file $self->config->{dir} . 'releases.json', { binmode => ':utf8' }, to_json $self->releases;
 
+    return;
+}
+
+sub refresh_releases {
+    my ( $self ) = @_;
+    $self->releases( $self->_build_releases );
     return;
 }
 

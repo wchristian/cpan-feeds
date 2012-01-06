@@ -31,6 +31,7 @@ sub dispatch_request {
     my ( $self, $env ) = @_;
 
     $self->env( $env );
+    $self->refresh_releases;
 
     disp(
         '' => sub {
