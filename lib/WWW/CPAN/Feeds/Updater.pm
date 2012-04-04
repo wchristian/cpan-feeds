@@ -66,7 +66,7 @@ sub get_new_releases {
             "range"     => { "release.date" => { "from" => $from, "to" => $self->now->_stringify } },
         }
     };
-    my $result = MetaCPAN::API->new->post( 'release/_search?size=10000', $request );
+    my $result = MetaCPAN::API->new->post( 'release/_search?size=5000', $request );
 
     my %new_releases = map { $_->{_source}{name} => $_->{_source} } @{ $result->{hits}{hits} };
 
