@@ -1,0 +1,3 @@
+MAILTO=walde.christian@googlemail.com
+
+*/5 *  *   *   *     PERL5LIB=~/cpan-feeds/lib perl cpan-feeds/bin/cpanfeeds_updater.pl
